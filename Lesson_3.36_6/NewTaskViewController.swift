@@ -9,6 +9,11 @@ import UIKit
 
 ///. 12
 final class NewTaskViewController: UIViewController {
+    
+    //33. создаем делегата
+    weak var delegate: NewTaskViewControllerDelegate?
+    
+    
     /// 14. Создаем taskTextField через ленивую переменную  и сразу ей присваиваем значение
     /// =  { значение } и его сразу инициализируем () --> = {...}()   т.е. мы создаем объект сразу
     /// с настраиваемыми параметрами
@@ -23,40 +28,50 @@ final class NewTaskViewController: UIViewController {
     
     /// 20. Создаем кнопку "Save Task"
     private lazy var saveButton: UIButton = {
-        /// Устанавиваем атрибуты для реботы с текстом
-        var attributes = AttributeContainer()
-        /// задаем жирный текст размер 18
-        attributes.font = UIFont.boldSystemFont(ofSize: 18)
+//        /// Устанавиваем атрибуты для реботы с текстом
+//        var attributes = AttributeContainer()
+//        /// задаем жирный текст размер 18
+//        attributes.font = UIFont.boldSystemFont(ofSize: 18)
+//        
+//        /// Создаем объект конфигурации для настройки параметров кнопки
+//        /// для UIButton эьл структура Сonfiguration (.filled синяя кнопка)
+//        var buttonConfig = UIButton.Configuration.filled()
+//        /// фон кнопки
+//        buttonConfig.baseBackgroundColor = .lightGreen
+//        ///  Конфигурируем текст кнопки на онове параметров attributes
+//        buttonConfig.attributedTitle = AttributedString("Save Task", attributes: attributes)
+//        /// Присваиваем buttonConfig для кнопки button
+//        /// в UIAction прописываем наше действие save()
+//        let button = UIButton(configuration: buttonConfig, primaryAction: UIAction { [unowned self] _ in
+//            save()
+//        })
+//        button.translatesAutoresizingMaskIntoConstraints = false
+//        return button
         
-        /// Создаем объект конфигурации для настройки параметров кнопки
-        /// для UIButton эьл структура Сonfiguration (.filled синяя кнопка)
-        var buttonConfig = UIButton.Configuration.filled()
-        /// фон кнопки
-        buttonConfig.baseBackgroundColor = .lightGreen
-        ///  Конфигурируем текст кнопки на онове параметров attributes
-        buttonConfig.attributedTitle = AttributedString("Save Task", attributes: attributes)
-        /// Присваиваем buttonConfig для кнопки button
-        /// в UIAction прописываем наше действие save()
-        let button = UIButton(configuration: buttonConfig, primaryAction: UIAction { [unowned self] _ in
-            save()
-        })
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
+        ///25. Применяем протокол Button Factory
+        /// Создаем фабрику
+        let filledButtonFactory = FilledButtonFactory(
+            title: "Save Task",
+            color: .lightGreen,
+            action: UIAction { [unowned self] _ in
+                save()
+            }
+        )
+        /// Создаем кнопку
+        return filledButtonFactory.createButton()
     }()
     
-    /// 23. Создаем кнопку "Cancel" по аналогии 20.
+    /// 26. Создаем кнопку "Cancel" по аналогии 25.
     private lazy var cancelButton: UIButton = {
-        var attributes = AttributeContainer()
-        attributes.font = UIFont.boldSystemFont(ofSize: 18)
-        
-        var buttonConfig = UIButton.Configuration.filled()
-        buttonConfig.baseBackgroundColor = .lightRed
-        buttonConfig.attributedTitle = AttributedString("Cancel", attributes: attributes)
-        let button = UIButton(configuration: buttonConfig, primaryAction: UIAction { [unowned self] _ in
-            save()
-        })
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
+        let filledButtonFactory = FilledButtonFactory(
+            title: "Cancel",
+            color: .lightRed,
+            action: UIAction { [unowned self] _ in
+                dismiss(animated: true)
+            }
+        )
+        /// Создаем кнопку
+        return filledButtonFactory.createButton()
     }()
     
     ///13.
@@ -71,8 +86,18 @@ final class NewTaskViewController: UIViewController {
         setConstraints()
     }
     
-    /// 21. Метод для кнопки "Save Task"
+    /// 21.  26. Метод для кнопки "Save Task"
     private func save() {
+        /// (Костыль) создаем экземнляр класса AppDelegate
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        /// после того как в файле бокового меню Lesson_3.36_6 прописали
+        ///  ToDoTask  со свойством title  создаем task
+        let task = ToDoTask(context: appDelegate.persistentContainer.viewContext)
+        task.title = taskTextField.text
+        /// Сохраняем в базе (используем метод appDDelegate --> saveContext() )
+        appDelegate.saveContext()
+        ///35. Обращаемся к делегату и запускаем метод reloadDate()
+        delegate?.reloadDate()
         /// закрываем экран
         dismiss(animated: true)
     }
